@@ -114,10 +114,10 @@ Rect CombineRect(Rect rect1, Rect rect2) {
 
 int main()
 {
-	OMRKnnDescription knn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
+	//OMRKnnDescription knn("D:\\Download\\train\\training-set", "D:\\Download\\train\\note");
 	char* text = new char[64];
 	//載入灰階(單通道)
-	Mat source = imread("C:\\Users\\Mystia\\Downloads\\The Witches' Ball\\The Witches' Ball-1.png", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat source = imread("D:\\Download\\Corpse Voyage - Be of Good Cheer! 『2』\\Corpse Voyage ~ Be of Good Cheer! 『2』-2.png", CV_LOAD_IMAGE_GRAYSCALE);
 	int size = source.rows * source.cols;
 	imshow("src", ~source);
 	//五線譜有陰影，所以不同閥值可以濾出不同粗細的線，線條的粗細在後面找ROI的時候會有差
@@ -183,8 +183,8 @@ int main()
 	vector<Vec4i> hierarchy;
 
 	//先侵蝕再膨脹，因為現在是黑白反轉的狀態，音符是白色的
-	dilate(vertical, vertical, Mat(), Point(-1, -1), 2);
-	erode(vertical, vertical, Mat(), Point(-1, -1), 2);
+	//dilate(vertical, vertical, Mat(), Point(-1, -1), 2);
+	//erode(vertical, vertical, Mat(), Point(-1, -1), 2);
 
 	findContours(vertical, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 	vector<vector<Point> > contours_poly(contours.size());
@@ -279,9 +279,23 @@ int main()
 	/*********************************/
 
 	Mat sampleROI;
-	verticalCopy(orderedROI[1][2]).copyTo(sampleROI);
-	float r = knn.FindNearest(~sampleROI, 1);
-	std::cout << "result : " << knn.GetSymbolName(r) << std::endl;
+
+	//float r = knn.FindNearestSymbol(~sampleROI);
+	//std::cout << "result : " << knn.GetSymbolName(r) << std::endl;
+
+	//imwrite("D:\\Download\\data2.png", colorImg);
+	verticalCopy(orderedROI[2][14]).copyTo(sampleROI);
+	imwrite("D:\\Download\\train0.png", ~sampleROI);
+	verticalCopy(orderedROI[2][15]).copyTo(sampleROI);
+	imwrite("D:\\Download\\train1.png", ~sampleROI);
+	verticalCopy(orderedROI[3][13]).copyTo(sampleROI);
+	imwrite("D:\\Download\\train2.png", ~sampleROI);
+	verticalCopy(orderedROI[3][14]).copyTo(sampleROI);
+	imwrite("D:\\Download\\train3.png", ~sampleROI);
+	verticalCopy(orderedROI[4][20]).copyTo(sampleROI);
+	imwrite("D:\\Download\\train4.png", ~sampleROI);
+	//verticalCopy(orderedROI[5][5]).copyTo(sampleROI);
+	//imwrite("D:\\Download\\train5.png", ~sampleROI);
 
 	delete[] orderedROI;
 	delete[] text;
