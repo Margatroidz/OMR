@@ -9,6 +9,7 @@
 #include <iostream>
 #include <filesystem>
 
+using namespace cv;
 using namespace std;
 using namespace std::experimental::filesystem;
 
@@ -47,12 +48,12 @@ void SymbolKnnDescription::impl::TrainKnn(map<string, int> input, int knnIndex)
 
 	int i = 0;
 	for (map<string, int>::iterator it = input.begin(); it != input.end(); ++it) {
-		cv::Mat inputData = cv::imread(it->first, CV_LOAD_IMAGE_GRAYSCALE);
-		cv::Mat trainData(20, 20, CV_32FC1);
-		cv::resize(inputData, trainData, trainData.size(), CV_INTER_AREA);
+		Mat inputData = imread(it->first, CV_LOAD_IMAGE_GRAYSCALE);
+		Mat trainData(20, 20, CV_32FC1);
+		resize(inputData, trainData, trainData.size(), CV_INTER_AREA);
 		//將map的index值放進label mat內
 		labels->data.fl[i] = it->second;
-		
+
 		//將從map拿到的圖片，轉為20x20後放入trainset內
 		for (int j = 0; j < 400; j++) {
 			trainingSet->data.fl[i * 400 + j] = trainData.data[j];
@@ -84,4 +85,31 @@ SymbolKnnDescription::SymbolKnnDescription(char* symbolPath, char* notePath) :pi
 
 SymbolKnnDescription::~SymbolKnnDescription()
 {
+}
+
+float SymbolKnnDescription::FindNearest(Mat sample, int noteType)
+{
+	int K = 5;
+	Mat sampleNormalize(20, 20, CV_32FC1);
+	resize(sample, sampleNormalize, sampleNormalize.size(), CV_INTER_AREA);
+	float _sampleData[400];
+	Mat sampleData(1, 400, CV_32FC1, _sampleData);
+	memcpy(sampleData.data, sampleNormalize.data, 400);
+	Mat distance(1, K, CV_32FC1);
+
+	float result = 0.0f;
+	switch (noteType)
+	{
+	case(1):
+		result = pimpl->symbolKnn.find_nearest(sampleData, K, 0, 0, 0, &distance);
+		break;
+
+	case(2):
+		result = pimpl->noteKnn.find_nearest(sampleData, K, 0, 0, 0, &distance);
+		break;
+	default:
+		return -1.0f;
+	}
+
+	return result;
 }

@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-#include <opencv2\core\core.hpp>
 #include <opencv2\highgui\highgui.hpp>
 #include <opencv2\imgproc\imgproc.hpp>
 using namespace cv;
@@ -101,9 +100,6 @@ void FindStaffAndBorder(Mat& source, vector<Vec4i>& outputLines, vector<Vec2i>& 
 		if (line[0] < verticalBorders[0]) verticalBorders[0] = line[0];
 		if (line[2] > verticalBorders[0]) verticalBorders[1] = line[2];
 	}
-
-	std::cout << verticalBorders[0] << std::endl;
-	std::cout << verticalBorders[1] << std::endl;
 }
 
 /*輸入的兩個矩形，輸出一個較大的矩形將兩個矩形框住*/
@@ -118,172 +114,180 @@ Rect CombineRect(Rect rect1, Rect rect2) {
 
 int main()
 {
-	SymbolKnnDescription symbolknn("D:\\Download\\training-set", "D:\\Download\\note");
-	//char* text = new char[64];
-	////載入灰階(單通道)
-	//Mat source = imread("D:\\Download\\Septette for the Dead Princess 『5』\\Septette for the Dead Princess 『5』-1.png", CV_LOAD_IMAGE_GRAYSCALE);
-	//int size = source.rows * source.cols;
-	//imshow("src", ~source);
-	////五線譜有陰影，所以不同閥值可以濾出不同粗細的線，線條的粗細在後面找ROI的時候會有差
-	//Mat binaryThin(source.rows, source.cols, CV_8U);
-	//threshold(~source, binaryThin, 150, 255, THRESH_BINARY);
-	//Mat binaryThick(source.rows, source.cols, CV_8U);
-	//threshold(~source, binaryThick, 15, 255, THRESH_BINARY);
+	//SymbolKnnDescription symbolknn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
+	char* text = new char[64];
+	//載入灰階(單通道)
+	Mat source = imread("C:\\Users\\Mystia\\Downloads\\The Witches' Ball\\The Witches' Ball-1.png", CV_LOAD_IMAGE_GRAYSCALE);
+	int size = source.rows * source.cols;
+	imshow("src", ~source);
+	//五線譜有陰影，所以不同閥值可以濾出不同粗細的線，線條的粗細在後面找ROI的時候會有差
+	Mat binaryThin(source.rows, source.cols, CV_8U);
+	threshold(~source, binaryThin, 150, 255, THRESH_BINARY);
+	Mat binaryThick(source.rows, source.cols, CV_8U);
+	threshold(~source, binaryThick, 15, 255, THRESH_BINARY);
 
-	//Mat vertical = SpecifyVerticalAxis(binaryThin);
-	//imshow("vertical", vertical);
+	Mat vertical = SpecifyVerticalAxis(binaryThin);
+	Mat verticalCopy;
+	vertical.copyTo(verticalCopy);
+	imshow("vertical", vertical);
 
-	//Mat horizontal = SpecifyHorizontalAxis(binaryThick);
-	/////Mat ttttt;
-	/////resize(horizontal, ttttt, Size(horizontal.cols / 2.2, horizontal.rows / 2.2));
-	/////imshow("horizontal", ttttt);
+	Mat horizontal = SpecifyHorizontalAxis(binaryThick);
+	///Mat ttttt;
+	///resize(horizontal, ttttt, Size(horizontal.cols / 2.2, horizontal.rows / 2.2));
+	///imshow("horizontal", ttttt);
 
-	//Mat hhh(horizontal.rows, horizontal.cols, CV_8UC3);
-	//cvtColor(horizontal, hhh, CV_GRAY2BGR);
-	//vector<Vec4i> lines;
-	//vector<Vec2i> lineHorizontalBorder;
-	//Vec2i lineVerticalBorder;
-	//FindStaffAndBorder(horizontal, lines, lineHorizontalBorder, lineVerticalBorder);
-	////把左邊五線譜外的圖用反轉的原圖取代，這樣大括弧就不會斷掉了
-	//for (int i = 0; i < source.rows; i++) {
-	//	for (int j = 0; j < lineVerticalBorder[0]; j++) {
-	//		int position = j + i * source.cols;
-	//		vertical.data[position] = ~source.data[position];
-	//	}
-	//}
-	/////imshow("vertical", vertical);
+	Mat hhh(horizontal.rows, horizontal.cols, CV_8UC3);
+	cvtColor(horizontal, hhh, CV_GRAY2BGR);
+	vector<Vec4i> lines;
+	vector<Vec2i> lineHorizontalBorder;
+	Vec2i lineVerticalBorder;
+	FindStaffAndBorder(horizontal, lines, lineHorizontalBorder, lineVerticalBorder);
+	//把左邊五線譜外的圖用反轉的原圖取代，這樣大括弧就不會斷掉了
+	for (int i = 0; i < source.rows; i++) {
+		for (int j = 0; j < lineVerticalBorder[0]; j++) {
+			int position = j + i * source.cols;
+			vertical.data[position] = ~source.data[position];
+		}
+	}
+	///imshow("vertical", vertical);
 
-	//std::cout << "共有 : " << lines.size() << " 個五線譜" << std::endl;
-	//int number = 0;
-	//int counter = 0;
-	//for (Vec4i sline : lines) {
-	//	if (counter >= 5) {
-	//		counter = 0;
-	//		number++;
-	//	}
-	//	std::cout << "第" << (number + 1) << "個五線譜，第" << (counter + 1) << "條線的y為" << sline[1] << std::endl;
-	//	counter++;
-	//	line(hhh, Point(sline[0], sline[1]), Point(sline[2], sline[3]), Scalar(0, 0, 255), 3);
+	std::cout << "共有 : " << lines.size() << " 個五線譜" << std::endl;
+	int number = 0;
+	int counter = 0;
+	for (Vec4i sline : lines) {
+		if (counter >= 5) {
+			counter = 0;
+			number++;
+		}
+		std::cout << "第" << (number + 1) << "個五線譜，第" << (counter + 1) << "條線的y為" << sline[1] << std::endl;
+		counter++;
+		line(hhh, Point(sline[0], sline[1]), Point(sline[2], sline[3]), Scalar(0, 0, 255), 3);
 
-	//	Point textPA = Point(sline[0] - 25, sline[1]);
-	//	sprintf_s(text, 64, "%d", counter + number * 5);
-	//	putText(hhh, text, textPA, FONT_HERSHEY_SCRIPT_SIMPLEX, 1.5, Scalar(0, 0, 255), 2, 8, false);
-	//}
+		Point textPA = Point(sline[0] - 25, sline[1]);
+		sprintf_s(text, 64, "%d", counter + number * 5);
+		putText(hhh, text, textPA, FONT_HERSHEY_SCRIPT_SIMPLEX, 1.5, Scalar(0, 0, 255), 2, 8, false);
+	}
 
-	//for (Vec2i bound : lineHorizontalBorder) {
-	//	line(hhh, Point(0, bound[0]), Point(hhh.cols, bound[0]), Scalar(255, 0, 255), 2);
-	//	line(hhh, Point(0, bound[1]), Point(hhh.cols, bound[1]), Scalar(0, 255, 0), 15);
-	//}
-	/////resize(hhh, hhh, Size(hhh.cols, hhh.rows));
-	/////imshow("horizontal2", hhh);
-	///*********************************/
+	for (Vec2i bound : lineHorizontalBorder) {
+		line(hhh, Point(0, bound[0]), Point(hhh.cols, bound[0]), Scalar(255, 0, 255), 2);
+		line(hhh, Point(0, bound[1]), Point(hhh.cols, bound[1]), Scalar(0, 255, 0), 15);
+	}
+	///resize(hhh, hhh, Size(hhh.cols, hhh.rows));
+	///imshow("horizontal2", hhh);
+	/*********************************/
 
-	///*尋找countour並尋找bounding box*/
-	//Mat colorImg;
-	//cvtColor(vertical, colorImg, CV_GRAY2BGR);
-	//vector<vector<Point>> contours;
-	//vector<Vec4i> hierarchy;
+	/*尋找countour並尋找bounding box*/
+	Mat colorImg;
+	cvtColor(vertical, colorImg, CV_GRAY2BGR);
+	vector<vector<Point>> contours;
+	vector<Vec4i> hierarchy;
 
-	////先侵蝕再膨脹，因為現在是黑白反轉的狀態，音符是白色的
-	//dilate(vertical, vertical, Mat(), Point(-1, -1), 2);
-	//erode(vertical, vertical, Mat(), Point(-1, -1), 2);
+	//先侵蝕再膨脹，因為現在是黑白反轉的狀態，音符是白色的
+	dilate(vertical, vertical, Mat(), Point(-1, -1), 2);
+	erode(vertical, vertical, Mat(), Point(-1, -1), 2);
 
-	//findContours(vertical, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-	//vector<vector<Point> > contours_poly(contours.size());
-	///*用水平border分類成數個向量，再按照x排序*/
-	//vector<Rect>* orderedROI = new vector<Rect>[lineHorizontalBorder.size()];
-	////把cotours最近似矩形後丟進vector
-	//int lineBorderSize = (int)lineHorizontalBorder.size();
-	//for (int i = 0; i < contours.size(); i++)
-	//{
-	//	approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
-	//	Rect tmp = boundingRect(Mat(contours_poly[i]));
+	findContours(vertical, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	vector<vector<Point> > contours_poly(contours.size());
+	/*用水平border分類成數個向量，再按照x排序*/
+	vector<Rect>* orderedROI = new vector<Rect>[lineHorizontalBorder.size()];
+	//把cotours最近似矩形後丟進vector
+	int lineBorderSize = (int)lineHorizontalBorder.size();
+	for (int i = 0; i < contours.size(); i++)
+	{
+		approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
+		Rect tmp = boundingRect(Mat(contours_poly[i]));
 
-	//	for (int i = 0; i < lineBorderSize; i++) {
-	//		//border的[0]為上限、[1]為下限，越上方數字越小
-	//		if (lineHorizontalBorder[i][0] < tmp.tl().y && tmp.tl().y < lineHorizontalBorder[i][1]) {
-	//			if (lineHorizontalBorder[i][0] < tmp.br().y && tmp.br().y < lineHorizontalBorder[i][1]) {
-	//				orderedROI[i].push_back(tmp);
-	//				break;
-	//			}
-	//			//有可能一個ROI橫跨兩個譜或以上，所以加這個判斷，但也最都只能處理橫跨兩個的，再多要再改
-	//			else if ((i + 1) < lineBorderSize) {
-	//				orderedROI[i].push_back(tmp);
-	//				orderedROI[i + 1].push_back(tmp);
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
+		for (int i = 0; i < lineBorderSize; i++) {
+			//border的[0]為上限、[1]為下限，越上方數字越小
+			if (lineHorizontalBorder[i][0] < tmp.tl().y && tmp.tl().y < lineHorizontalBorder[i][1]) {
+				if (lineHorizontalBorder[i][0] < tmp.br().y && tmp.br().y < lineHorizontalBorder[i][1]) {
+					orderedROI[i].push_back(tmp);
+					break;
+				}
+				//有可能一個ROI橫跨兩個譜或以上，所以加這個判斷，但也最都只能處理橫跨兩個的，再多要再改
+				else if ((i + 1) < lineBorderSize) {
+					orderedROI[i].push_back(tmp);
+					orderedROI[i + 1].push_back(tmp);
+					break;
+				}
+			}
+		}
+	}
 
-	//for (int i = 0; i < lineBorderSize; i++) {
-	//	sort(orderedROI[i].begin(), orderedROI[i].end(),
-	//		[](const Rect & a, const Rect & b) -> bool
-	//	{
-	//		return a.tl().x < b.tl().x;
-	//	});
-	//}
+	for (int i = 0; i < lineBorderSize; i++) {
+		sort(orderedROI[i].begin(), orderedROI[i].end(),
+			[](const Rect & a, const Rect & b) -> bool
+		{
+			return a.tl().x < b.tl().x;
+		});
+	}
 
-	////把面積過小的連通物件去跟前面或後面最接近且較大的物件合併
-	//for (int i = 0; i < lineHorizontalBorder.size(); i++) {
-	//	//int ROIVectorSize = orderedROI[i].size();
-	//	//大小事會變動的，所以不能先算size
-	//	//int q = orderedROI[i].size();
-	//	std::cout << orderedROI[i].size() << std::endl;
-	//	for (int j = 0; j < orderedROI[i].size(); j++) {
-	//		//if (q != orderedROI[i].size()) std::cout << 666;
-	//		//如果後面的tl(左上)或bl(左下)跟自己交疊，就跟後面的ROI合併
-	//		if (j < orderedROI[i].size() - 1 &&
-	//			(orderedROI[i][j].contains(orderedROI[i][j + 1].tl()) || orderedROI[i][j].contains(Point(orderedROI[i][j + 1].tl().x, orderedROI[i][j + 1].tl().y + orderedROI[i][j + 1].height >> 1)))) {
-	//			//先在第j個位置插入，再刪除j+1的rect兩次
-	//			orderedROI[i].insert(orderedROI[i].begin() + j, 1, CombineRect(orderedROI[i][j], orderedROI[i][j + 1]));
-	//			orderedROI[i].erase(orderedROI[i].begin() + j + 1);
-	//			orderedROI[i].erase(orderedROI[i].begin() + j + 1);
-	//		}
-	//		//如果前面的br(右下)或tr(右上)跟自己交疊，就跟前面的ROI合併
-	//		else if (j > 0 &&
-	//			(orderedROI[i][j].contains(orderedROI[i][j - 1].br()) || orderedROI[i][j].contains(Point(orderedROI[i][j - 1].tl().x, orderedROI[i][j - 1].tl().y - orderedROI[i][j - 1].height >> 1)))) {
-	//			//先在第j-1個位置插入，再刪除j的rect兩次
-	//			orderedROI[i].insert(orderedROI[i].begin() + j - 1, 1, CombineRect(orderedROI[i][j], orderedROI[i][j - 1]));
-	//			orderedROI[i].erase(orderedROI[i].begin() + j);
-	//			orderedROI[i].erase(orderedROI[i].begin() + j);
-	//			j--;
-	//		}
+	//把面積過小的連通物件去跟前面或後面最接近且較大的物件合併
+	for (int i = 0; i < lineHorizontalBorder.size(); i++) {
+		//int ROIVectorSize = orderedROI[i].size();
+		//大小事會變動的，所以不能先算size
+		//int q = orderedROI[i].size();
+		//std::cout << orderedROI[i].size() << std::endl;
+		for (int j = 0; j < orderedROI[i].size(); j++) {
+			//if (q != orderedROI[i].size()) std::cout << 666;
+			//如果後面的tl(左上)或bl(左下)跟自己交疊，就跟後面的ROI合併
+			if (j < orderedROI[i].size() - 1 &&
+				(orderedROI[i][j].contains(orderedROI[i][j + 1].tl()) || orderedROI[i][j].contains(Point(orderedROI[i][j + 1].tl().x, orderedROI[i][j + 1].tl().y + orderedROI[i][j + 1].height >> 1)))) {
+				//先在第j個位置插入，再刪除j+1的rect兩次
+				orderedROI[i].insert(orderedROI[i].begin() + j, 1, CombineRect(orderedROI[i][j], orderedROI[i][j + 1]));
+				orderedROI[i].erase(orderedROI[i].begin() + j + 1);
+				orderedROI[i].erase(orderedROI[i].begin() + j + 1);
+			}
+			//如果前面的br(右下)或tr(右上)跟自己交疊，就跟前面的ROI合併
+			else if (j > 0 &&
+				(orderedROI[i][j].contains(orderedROI[i][j - 1].br()) || orderedROI[i][j].contains(Point(orderedROI[i][j - 1].tl().x, orderedROI[i][j - 1].tl().y - orderedROI[i][j - 1].height >> 1)))) {
+				//先在第j-1個位置插入，再刪除j的rect兩次
+				orderedROI[i].insert(orderedROI[i].begin() + j - 1, 1, CombineRect(orderedROI[i][j], orderedROI[i][j - 1]));
+				orderedROI[i].erase(orderedROI[i].begin() + j);
+				orderedROI[i].erase(orderedROI[i].begin() + j);
+				j--;
+			}
 
-	//	}
-	//	std::cout << orderedROI[i].size() << std::endl;
-	//}
+		}
+		//std::cout << orderedROI[i].size() << std::endl;
+	}
 
-	///*********************************/
+	/*********************************/
 
-	///*將剛剛找到的bounding box畫上標示，並註記為第幾排的第幾個，橫跨多欄的會再經過的欄都出現*/
-	///// Draw polygonal contour + bonding rects + circles
-	//Scalar color = Scalar(0, 0, 255);
-	//Scalar fontColor = Scalar(255, 255, 0);
-	//for (int i = 0; i < lineHorizontalBorder.size(); i++)
-	//{
-	//	for (int j = 0; j < orderedROI[i].size(); j++) {
-	//		//drawContours(colorImg, contours_poly, i, color, 2, 8, vector<Vec4i>(), 0, Point());
-	//		rectangle(colorImg, orderedROI[i][j].tl(), orderedROI[i][j].br(), color, 2, 8, 0);
-	//		Point textP = Point(orderedROI[i][j].tl().x, orderedROI[i][j].tl().y - 10);
-	//		Point textPA = Point(orderedROI[i][j].tl().x, orderedROI[i][j].tl().y - 20);
+	/*將剛剛找到的bounding box畫上標示，並註記為第幾排的第幾個，橫跨多欄的會再經過的欄都出現*/
+	/// Draw polygonal contour + bonding rects + circles
+	Scalar color = Scalar(0, 0, 255);
+	Scalar fontColor = Scalar(255, 255, 0);
+	for (int i = 0; i < lineHorizontalBorder.size(); i++)
+	{
+		for (int j = 0; j < orderedROI[i].size(); j++) {
+			//drawContours(colorImg, contours_poly, i, color, 2, 8, vector<Vec4i>(), 0, Point());
+			rectangle(colorImg, orderedROI[i][j].tl(), orderedROI[i][j].br(), color, 2, 8, 0);
+			Point textP = Point(orderedROI[i][j].tl().x, orderedROI[i][j].tl().y - 10);
+			Point textPA = Point(orderedROI[i][j].tl().x, orderedROI[i][j].tl().y - 20);
 
-	//		sprintf_s(text, 64, "%d - %d", i, j);
-	//		putText(colorImg, text, textP, FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, fontColor, 0.5, 8, false);
-	//			/*if (i == 0 && (j == 8 || j == 9 || j == 10 || j == 29)) {
-	//				std::cout << j << std::endl;
-	//				std::cout << " x = " << orderedROI[i][j].tl().x << " y = " << orderedROI[i][j].tl().y << std::endl;
-	//				std::cout << " x = " << orderedROI[i][j].br().x << " y = " << orderedROI[i][j].br().y << std::endl;
-	//			}*/
-	//	}
-	//}
+			sprintf_s(text, 64, "%d - %d", i, j);
+			putText(colorImg, text, textP, FONT_HERSHEY_SCRIPT_SIMPLEX, 0.5, fontColor, 0.5, 8, false);
+			/*if (i == 0 && (j == 8 || j == 9 || j == 10 || j == 29)) {
+				std::cout << j << std::endl;
+				std::cout << " x = " << orderedROI[i][j].tl().x << " y = " << orderedROI[i][j].tl().y << std::endl;
+				std::cout << " x = " << orderedROI[i][j].br().x << " y = " << orderedROI[i][j].br().y << std::endl;
+			}*/
+		}
+	}
 
-	///*********************************/
-	//delete[] orderedROI;
-	//delete[] text;
-	///// Show in a window
-	//namedWindow("Contours", CV_WINDOW_AUTOSIZE);
-	//imshow("Contours", colorImg);
+	/*********************************/
+
+	Mat testSample;
+	//Mat sampleROI(testSample, orderedROI[0][0]);
+	verticalCopy(orderedROI[0][3]).copyTo(testSample);
+	imshow("test", testSample);
+
+	delete[] orderedROI;
+	delete[] text;
+	/// Show in a window
+	namedWindow("Contours", CV_WINDOW_AUTOSIZE);
+	imshow("Contours", colorImg);
 
 	waitKey();
 	return 0;
