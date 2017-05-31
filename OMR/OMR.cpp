@@ -1,5 +1,5 @@
 #pragma once
-#include "SymbolKnnDescription.h"
+#include "OMRKnnDescription.h"
 #include <iostream>
 #include <vector>
 #include <math.h>
@@ -114,7 +114,7 @@ Rect CombineRect(Rect rect1, Rect rect2) {
 
 int main()
 {
-	//SymbolKnnDescription symbolknn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
+	OMRKnnDescription knn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
 	char* text = new char[64];
 	//載入灰階(單通道)
 	Mat source = imread("C:\\Users\\Mystia\\Downloads\\The Witches' Ball\\The Witches' Ball-1.png", CV_LOAD_IMAGE_GRAYSCALE);
@@ -278,15 +278,15 @@ int main()
 
 	/*********************************/
 
-	Mat testSample;
-	//Mat sampleROI(testSample, orderedROI[0][0]);
-	verticalCopy(orderedROI[0][3]).copyTo(testSample);
-	imshow("test", testSample);
+	Mat sampleROI;
+	verticalCopy(orderedROI[1][2]).copyTo(sampleROI);
+	float r = knn.FindNearest(~sampleROI, 1);
+	std::cout << "result : " << knn.GetSymbolName(r) << std::endl;
 
 	delete[] orderedROI;
 	delete[] text;
 	/// Show in a window
-	namedWindow("Contours", CV_WINDOW_AUTOSIZE);
+	//namedWindow("Contours", CV_WINDOW_AUTOSIZE);
 	imshow("Contours", colorImg);
 
 	waitKey();
