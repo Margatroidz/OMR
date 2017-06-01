@@ -25,11 +25,7 @@ struct OMRKnnDescription::impl {
 
 	map<string, int> GetTrainData(char* path, vector<string>& correspondentName);
 	void TrainKnn(map<string, int> input, CvKNearest& knnDataSet);
-<<<<<<< HEAD
 	float FindNearestSymbol(Mat sample, CvKNearest& knn);
-=======
-	float FindNearestSymbol(Mat sample, CvKNearest knn);
->>>>>>> 44735e08edf5f7c5d222ed3fec7efc926fc68731
 };
 OMRKnnDescription::impl::impl() {}
 OMRKnnDescription::impl::~impl() {}
@@ -78,11 +74,7 @@ void OMRKnnDescription::impl::TrainKnn(map<string, int> input, CvKNearest& knnDa
 	cvReleaseMat(&labels);
 }
 
-<<<<<<< HEAD
 float OMRKnnDescription::impl::FindNearestSymbol(Mat sample, CvKNearest& knn)
-=======
-float OMRKnnDescription::impl::FindNearestSymbol(Mat sample, CvKNearest knn)
->>>>>>> 44735e08edf5f7c5d222ed3fec7efc926fc68731
 {
 	int K = 5;
 	Mat sampleNormalize(20, 20, CV_32FC1);
@@ -93,7 +85,6 @@ float OMRKnnDescription::impl::FindNearestSymbol(Mat sample, CvKNearest knn)
 
 	float result = 0.0f;
 	result = knn.find_nearest(sampleData, K, 0, 0, 0, distance);
-<<<<<<< HEAD
 	float mini = min((float)distance->data.fl[0], (float)distance->data.fl[1]);
 	for(int i = 2; i < K; i++) mini = min(mini, (float)distance->data.fl[i]);
 	cvReleaseMat(&distance);
@@ -117,14 +108,6 @@ float OMRKnnDescription::impl::FindNearestSymbol(Mat sample, CvKNearest knn)
 	else if (mini > 800000) return -1;
 
 	//for (int i = 0; i < K; i++) cout << "No\. " << i << " distance = " << setprecision(3)<< (float)distance->data.fl[i] << endl;
-
-=======
-
-	for (int i = 0; i < K; i++) cout << "No\. " << i << " distance = " << setprecision(3)<< (float)distance->data.fl[i] << endl;
-
-	cvReleaseMat(&distance);
-	cvReleaseMat(&sampleData);
->>>>>>> 44735e08edf5f7c5d222ed3fec7efc926fc68731
 	return result;
 }
 
@@ -162,9 +145,6 @@ string OMRKnnDescription::GetSymbolName(float index)
 
 string OMRKnnDescription::GetNoteElementName(float index)
 {
-<<<<<<< HEAD
 	if (index == -1) return "can't not Identify !";
-=======
->>>>>>> 44735e08edf5f7c5d222ed3fec7efc926fc68731
 	return pimpl->indexToNoteElementName[(int)index];
 }
