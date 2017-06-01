@@ -114,10 +114,10 @@ Rect CombineRect(Rect rect1, Rect rect2) {
 
 int main()
 {
-	OMRKnnDescription knn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
+	//OMRKnnDescription knn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
 	char* text = new char[64];
 	//載入灰階(單通道)
-	Mat source = imread("C:\\Users\\Mystia\\Downloads\\The Witches' Ball\\The Witches' Ball-1.png", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat source = imread("C:\\Users\\Mystia\\Downloads\\Native Faith 『4』\\Native Faith 『4』-3.png", CV_LOAD_IMAGE_GRAYSCALE);
 	int size = source.rows * source.cols;
 	imshow("src", ~source);
 	//五線譜有陰影，所以不同閥值可以濾出不同粗細的線，線條的粗細在後面找ROI的時候會有差
@@ -183,8 +183,8 @@ int main()
 	vector<Vec4i> hierarchy;
 
 	//先侵蝕再膨脹，因為現在是黑白反轉的狀態，音符是白色的
-	dilate(vertical, vertical, Mat(), Point(-1, -1), 2);
-	erode(vertical, vertical, Mat(), Point(-1, -1), 2);
+	dilate(vertical, vertical, Mat(), Point(-1, -1), 1);
+	erode(vertical, vertical, Mat(), Point(-1, -1), 1);
 
 	findContours(vertical, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 	vector<vector<Point> > contours_poly(contours.size());
@@ -224,10 +224,7 @@ int main()
 
 	//把面積過小的連通物件去跟前面或後面最接近且較大的物件合併
 	for (int i = 0; i < lineHorizontalBorder.size(); i++) {
-		//int ROIVectorSize = orderedROI[i].size();
 		//大小事會變動的，所以不能先算size
-		//int q = orderedROI[i].size();
-		//std::cout << orderedROI[i].size() << std::endl;
 		for (int j = 0; j < orderedROI[i].size(); j++) {
 			//if (q != orderedROI[i].size()) std::cout << 666;
 			//如果後面的tl(左上)或bl(左下)跟自己交疊，就跟後面的ROI合併
@@ -279,15 +276,50 @@ int main()
 	/*********************************/
 
 	Mat sampleROI;
-	verticalCopy(orderedROI[1][2]).copyTo(sampleROI);
-	float r = knn.FindNearest(~sampleROI, 1);
-	std::cout << "result : " << knn.GetSymbolName(r) << std::endl;
+	verticalCopy(orderedROI[0][18]).copyTo(sampleROI);
+	Mat sampleCopy = sampleROI.clone();
+
+	vector<Vec4i> noteLines;
+	HoughLinesP(sampleROI, noteLines, 1, CV_PI, 50);
+
+	for (Vec4i sline : noteLines) {
+		line(sampleCopy, Point(sline[0], sline[1]), Point(sline[2], sline[3]), Scalar(0), 1);
+	}
+
+	erode(sampleCopy, sampleCopy, Mat(), Point(-1, -1), 1);
+	dilate(sampleCopy, sampleCopy, Mat(), Point(-1, -1), 2);
+	erode(sampleCopy, sampleCopy, Mat(), Point(-1, -1), 1);
+
+
+	imshow("note", sampleCopy);
+
+
+	/*for (int i = 0; i < lineHorizontalBorder.size(); i++) {
+		for (int j = 0; j < orderedROI[i].size(); j++) {
+			verticalCopy(orderedROI[i][j]).copyTo(sampleROI);
+			float r = knn.FindNearestSymbol(~sampleROI);
+			std::cout << i << " - " << j << "seam like  " << knn.GetSymbolName(r) << std::endl;
+		}
+	}
+	imwrite("C:\\Users\\Mystia\\Downloads\\data.png", colorImg);*/
+	//verticalCopy(orderedROI[1][30]).copyTo(sampleROI);
+	//imwrite("C:\\Users\\Mystia\\Downloads\\train0.png", ~sampleROI);
+	//verticalCopy(orderedROI[1][21]).copyTo(sampleROI);
+	//imwrite("C:\\Users\\Mystia\\Downloads\\train1.png", ~sampleROI);
+	//verticalCopy(orderedROI[2][12]).copyTo(sampleROI);
+	//imwrite("C:\\Users\\Mystia\\Downloads\\train2.png", ~sampleROI);
+	//verticalCopy(orderedROI[2][24]).copyTo(sampleROI);
+	//imwrite("C:\\Users\\Mystia\\Downloads\\train3.png", ~sampleROI);
+	//verticalCopy(orderedROI[3][23]).copyTo(sampleROI);
+	//imwrite("C:\\Users\\Mystia\\Downloads\\train4.png", ~sampleROI);
+	//verticalCopy(orderedROI[0][56]).copyTo(sampleROI);
+	//imwrite("C:\\Users\\Mystia\\Downloads\\train5.png", ~sampleROI);
 
 	delete[] orderedROI;
 	delete[] text;
 	/// Show in a window
 	//namedWindow("Contours", CV_WINDOW_AUTOSIZE);
-	imshow("Contours", colorImg);
+	//imshow("Contours", colorImg);
 
 	waitKey();
 	return 0;
