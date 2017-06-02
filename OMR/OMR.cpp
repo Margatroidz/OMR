@@ -114,10 +114,10 @@ Rect CombineRect(Rect rect1, Rect rect2) {
 
 int main()
 {
-	//OMRKnnDescription knn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
+	OMRKnnDescription knn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
 	char* text = new char[64];
 	//載入灰階(單通道)
-	Mat source = imread("C:\\Users\\Mystia\\Downloads\\Native Faith 『4』\\Native Faith 『4』-3.png", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat source = imread("C:\\Users\\Mystia\\Downloads\\12321.png", CV_LOAD_IMAGE_GRAYSCALE);
 	int size = source.rows * source.cols;
 	imshow("src", ~source);
 	//五線譜有陰影，所以不同閥值可以濾出不同粗細的線，線條的粗細在後面找ROI的時候會有差
@@ -129,7 +129,6 @@ int main()
 	Mat vertical = SpecifyVerticalAxis(binaryThin);
 	Mat verticalCopy;
 	vertical.copyTo(verticalCopy);
-	imshow("vertical", vertical);
 
 	Mat horizontal = SpecifyHorizontalAxis(binaryThick);
 	///Mat ttttt;
@@ -183,8 +182,9 @@ int main()
 	vector<Vec4i> hierarchy;
 
 	//先侵蝕再膨脹，因為現在是黑白反轉的狀態，音符是白色的
-	dilate(vertical, vertical, Mat(), Point(-1, -1), 1);
-	erode(vertical, vertical, Mat(), Point(-1, -1), 1);
+	//dilate(vertical, vertical, Mat(), Point(-1, -1), 1);
+	//erode(vertical, vertical, Mat(), Point(-1, -1), 1);
+	imshow("vertical", vertical);
 
 	findContours(vertical, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 	vector<vector<Point> > contours_poly(contours.size());
@@ -275,23 +275,53 @@ int main()
 
 	/*********************************/
 
-	Mat sampleROI;
-	verticalCopy(orderedROI[0][18]).copyTo(sampleROI);
-	Mat sampleCopy = sampleROI.clone();
 
-	vector<Vec4i> noteLines;
-	HoughLinesP(sampleROI, noteLines, 1, CV_PI, 50);
+	for (int i = 0; i < lineHorizontalBorder.size(); i++) {
+		for (int j = 0; j < orderedROI[i].size(); j++) {
+			Mat sampleROI;
+			verticalCopy(orderedROI[i][j]).copyTo(sampleROI);
+			float r = knn.FindNearestSymbol(~sampleROI);
+			if (r == -1) {
+				Rect resizeROI(Point(orderedROI[i][j].tl().x - 5, orderedROI[i][j].tl().y - 5), Point(orderedROI[i][j].br().x + 5, orderedROI[i][j].br().y + 5));
+				verticalCopy(resizeROI).copyTo(sampleROI);
+				Mat sampleROICopy = sampleROI.clone();
 
-	for (Vec4i sline : noteLines) {
-		line(sampleCopy, Point(sline[0], sline[1]), Point(sline[2], sline[3]), Scalar(0), 1);
+				vector<Vec4i> noteLines;
+				HoughLinesP(sampleROI, noteLines, 0.1, CV_PI, 45, 10, 10);
+
+				for (Vec4i sline : noteLines) {
+					line(sampleROICopy, Point(sline[0], sline[1]), Point(sline[2], sline[3]), Scalar(0), 2);
+				}
+				if (i == 2 && j == 27)imshow("gdfg", sampleROICopy);
+
+				std::stringstream ss;
+				ss << "C:\\Users\\Mystia\\Downloads\\zzzzzz\\train" << i << " " << j;
+
+				findContours(sampleROICopy, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+				contours_poly.resize(contours.size());
+				std::cout << "size = " << noteLines.size() << " : " << i << " , " << j << std::endl;
+				for (int k = 0; k < contours.size(); k++)
+				{
+					std::stringstream st;
+					st << ss.str() << " " << k << ".png";
+					approxPolyDP(Mat(contours[k]), contours_poly[k], 3, true);
+					Rect tmp = boundingRect(Mat(contours_poly[k]));
+					Mat trainData;
+					sampleROI(tmp).copyTo(trainData);
+					if (tmp.height > 5 && tmp.width > 5)
+						imwrite(st.str(), ~trainData);
+				}
+
+				//imwrite(ss.str(), );
+				//imshow(ss.str(), sampleCopy);
+			}
+			//std::cout << i << " - " << j << "seam like  " << knn.GetSymbolName(r) << std::endl;
+		}
 	}
 
-	erode(sampleCopy, sampleCopy, Mat(), Point(-1, -1), 1);
-	dilate(sampleCopy, sampleCopy, Mat(), Point(-1, -1), 2);
-	erode(sampleCopy, sampleCopy, Mat(), Point(-1, -1), 1);
 
-
-	imshow("note", sampleCopy);
+	//imshow("note", sampleCopy);
 
 
 	/*for (int i = 0; i < lineHorizontalBorder.size(); i++) {
@@ -300,8 +330,8 @@ int main()
 			float r = knn.FindNearestSymbol(~sampleROI);
 			std::cout << i << " - " << j << "seam like  " << knn.GetSymbolName(r) << std::endl;
 		}
-	}
-	imwrite("C:\\Users\\Mystia\\Downloads\\data.png", colorImg);*/
+	}*/
+	//imwrite("C:\\Users\\Mystia\\Downloads\\data.png", colorImg);
 	//verticalCopy(orderedROI[1][30]).copyTo(sampleROI);
 	//imwrite("C:\\Users\\Mystia\\Downloads\\train0.png", ~sampleROI);
 	//verticalCopy(orderedROI[1][21]).copyTo(sampleROI);
