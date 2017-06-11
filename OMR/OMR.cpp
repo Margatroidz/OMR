@@ -114,10 +114,10 @@ Rect CombineRect(Rect rect1, Rect rect2) {
 
 int main()
 {
-	OMRKnnDescription knn("C:\\Users\\Mystia\\Downloads\\train\\training-set", "C:\\Users\\Mystia\\Downloads\\train\\note");
+	OMRKnnDescription knn("D:\\Download\\train\\training-set", "D:\\Download\\train\\note");
 	char* text = new char[64];
 	//載入灰階(單通道)
-	Mat source = imread("C:\\Users\\Mystia\\Downloads\\12321.png", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat source = imread("D:\\Download\\Score\\Youkai Mountain - Mytsterious Mountain 『3』\\Youkai Mountain ~ Mytsterious Mountain 『3』-2.png", CV_LOAD_IMAGE_GRAYSCALE);
 	int size = source.rows * source.cols;
 	imshow("src", ~source);
 	//五線譜有陰影，所以不同閥值可以濾出不同粗細的線，線條的粗細在後面找ROI的時候會有差
@@ -284,39 +284,48 @@ int main()
 			if (r == -1) {
 				Rect resizeROI(Point(orderedROI[i][j].tl().x - 5, orderedROI[i][j].tl().y - 5), Point(orderedROI[i][j].br().x + 5, orderedROI[i][j].br().y + 5));
 				verticalCopy(resizeROI).copyTo(sampleROI);
-				Mat sampleROICopy = sampleROI.clone();
-
+				
 				vector<Vec4i> noteLines;
-				HoughLinesP(sampleROI, noteLines, 0.1, CV_PI, 45, 10, 10);
-
+				HoughLinesP(sampleROI, noteLines, 1, CV_PI / 360, 30, 25, 3);
+				
+				Mat sampleROICopy = sampleROI.clone();
+				dilate(sampleROICopy, sampleROICopy, Mat(), Point(-1, -1), 3);
+				erode(sampleROICopy, sampleROICopy, Mat(), Point(-1, -1), 3);
 				for (Vec4i sline : noteLines) {
-					line(sampleROICopy, Point(sline[0], sline[1]), Point(sline[2], sline[3]), Scalar(0), 2);
+					double Angle = atan2(sline[3] - sline[1], sline[2] - sline[0]) * 180.0 / CV_PI;
+					if (abs(abs(Angle)-90) <= 3)
+						line(sampleROICopy, Point(sline[0], sline[1]), Point(sline[2], sline[3]), Scalar(0), 3);
 				}
-				if (i == 2 && j == 27)imshow("gdfg", sampleROICopy);
+				if (i == 7 && j == 28)imshow("gdfg", sampleROICopy);
 
-				std::stringstream ss;
-				ss << "C:\\Users\\Mystia\\Downloads\\zzzzzz\\train" << i << " " << j;
+				//std::stringstream ss;
+				//ss << "D:\\Download\\zzzzzz\\train" << i << " " << j;
 
 				findContours(sampleROICopy, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-
 				contours_poly.resize(contours.size());
-				std::cout << "size = " << noteLines.size() << " : " << i << " , " << j << std::endl;
+				//std::cout << "size = " << noteLines.size() << " : " << i << " , " << j << std::endl;
+				vector<float> result;
 				for (int k = 0; k < contours.size(); k++)
 				{
-					std::stringstream st;
-					st << ss.str() << " " << k << ".png";
+					//std::stringstream st;
+					//st << ss.str() << " " << k << ".png";
 					approxPolyDP(Mat(contours[k]), contours_poly[k], 3, true);
 					Rect tmp = boundingRect(Mat(contours_poly[k]));
-					Mat trainData;
-					sampleROI(tmp).copyTo(trainData);
-					if (tmp.height > 5 && tmp.width > 5)
-						imwrite(st.str(), ~trainData);
+
+					if (tmp.width > 10 && tmp.height > 10) {
+						Mat sampleData;
+						sampleROI(tmp).copyTo(sampleData);
+						int r = knn.FindNearestNoteElement(~sampleData);
+						if (r != -1)result.push_back(r);
+					}
+					//if (tmp.height > 5 && tmp.width > 5)
+					//	imwrite(st.str(), ~trainData);
 				}
 
-				//imwrite(ss.str(), );
-				//imshow(ss.str(), sampleCopy);
+				std::cout << i << " - " << j << "seam like " ;
+				for (float rr : result) std::cout << knn.GetNoteElementName(rr) << " ";
+				std::cout << std::endl;
 			}
-			//std::cout << i << " - " << j << "seam like  " << knn.GetSymbolName(r) << std::endl;
 		}
 	}
 
@@ -331,7 +340,7 @@ int main()
 			std::cout << i << " - " << j << "seam like  " << knn.GetSymbolName(r) << std::endl;
 		}
 	}*/
-	//imwrite("C:\\Users\\Mystia\\Downloads\\data.png", colorImg);
+	//imwrite("D:\\Download\\data.png", colorImg);
 	//verticalCopy(orderedROI[1][30]).copyTo(sampleROI);
 	//imwrite("C:\\Users\\Mystia\\Downloads\\train0.png", ~sampleROI);
 	//verticalCopy(orderedROI[1][21]).copyTo(sampleROI);

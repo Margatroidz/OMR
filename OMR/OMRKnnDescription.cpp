@@ -76,7 +76,7 @@ void OMRKnnDescription::impl::TrainKnn(map<string, int> input, CvKNearest& knnDa
 
 float OMRKnnDescription::impl::FindNearestSymbol(Mat sample, CvKNearest& knn)
 {
-	int K = 5;
+	int K = 3;
 	Mat sampleNormalize(20, 20, CV_32FC1);
 	resize(sample, sampleNormalize, sampleNormalize.size(), CV_INTER_AREA);
 	CvMat *sampleData = cvCreateMat(1, 400, CV_32FC1);
@@ -86,15 +86,16 @@ float OMRKnnDescription::impl::FindNearestSymbol(Mat sample, CvKNearest& knn)
 	float result = 0.0f;
 	result = knn.find_nearest(sampleData, K, 0, 0, 0, distance);
 	float mini = min((float)distance->data.fl[0], (float)distance->data.fl[1]);
-	for(int i = 2; i < K; i++) mini = min(mini, (float)distance->data.fl[i]);
+	for (int i = 2; i < K; i++) mini = min(mini, (float)distance->data.fl[i]);
 	cvReleaseMat(&distance);
 	cvReleaseMat(&sampleData);
-
 	//if (mini < 800000) cout << "very similar !" << endl;
-	if (mini < 800000 && mini > 500000) {
+	if (mini < 2000000 && mini > 500000) {
 		//自動訓練資料
 		stringstream ss;
-		ss << "C:\\Users\\Mystia\\Downloads\\train\\training-set\\" << indexToSymbolName[(int)result];
+
+		if(knn.get_sample_count() == symbolKnn.get_sample_count()) ss << "D:\\Download\\train\\training-set\\" << indexToSymbolName[(int)result];
+		else ss << "D:\\Download\\train\\note\\" << indexToNoteElementName[(int)result];
 		int cnt = std::count_if(
 			directory_iterator(ss.str()),
 			directory_iterator(),
